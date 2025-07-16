@@ -8,6 +8,14 @@ import {
   User,
   Vent,
   Room,
+  HvacUnit,
+  HvacMode,
+  FanSpeed,
+  SwingMode,
+  PowerState,
+  Thermostat,
+  Bridge,
+  RemoteSensor,
 } from './models';
 
 export interface Token {
