@@ -3,7 +3,7 @@ export { Puck } from './puck';
 export { Vent } from './vent';
 export { Model } from './model';
 export { Room, RoomAwayMode, OccupancyMode, PuckInactive } from './room';
-export { Structure, StructureHeatCoolMode, FlairMode } from './structure';
+export { Structure, StructureHeatCoolMode, FlairMode, HomeAwayMode, StructureAwayMode } from './structure';
 export { HvacUnit, HvacMode, FanSpeed, SwingMode, PowerState, HvacConstraints } from './hvac-unit';
 export { Thermostat } from './thermostat';
 export { Bridge } from './bridge';
