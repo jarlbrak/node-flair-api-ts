@@ -1,4 +1,4 @@
-# flair-api-ts
+# @jarlbrak/flair-api-ts
 
 A TypeScript/Node.js implementation of the Flair Smart Vent API, supporting the latest OAuth 2.0 authentication and all current Flair devices including Smart Vents, Pucks, HVAC units (minisplits), thermostats, bridges, and remote sensors.
 
@@ -20,13 +20,13 @@ A TypeScript/Node.js implementation of the Flair Smart Vent API, supporting the 
 ## Installation
 
 ```bash
-npm install flair-api-ts
+npm install @jarlbrak/flair-api-ts
 ```
 
 ## Quick Start
 
 ```typescript
-import { Client } from 'flair-api-ts';
+import { Client } from '@jarlbrak/flair-api-ts';
 
 // Initialize the client with your OAuth 2.0 credentials
 const client = new Client(
@@ -140,7 +140,7 @@ import {
   FanSpeed,
   FlairMode,
   StructureHeatCoolMode
-} from 'flair-api-ts';
+} from '@jarlbrak/flair-api-ts';
 ```
 
 ## Development
@@ -173,6 +173,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, deps
 
 MIT
 
+## Credits
+
+This package is based on the original [flair-api-ts](https://github.com/bassrock/node-flair-api-ts) by bassrock. Version 2.0.0 represents a major update to support the latest Flair API with OAuth 2.0.
+
 ## Contributing
 
 Pull requests are welcome! Please ensure:
@@ -183,11 +187,19 @@ Pull requests are welcome! Please ensure:
 
 ## Changelog
 
-### Latest Update
-- Updated to support OAuth 2.0 authentication
-- Added support for HVAC units (minisplits)
+### Version 2.0.0 (Breaking Changes)
+- **BREAKING**: Package renamed from `flair-api-ts` to `@jarlbrak/flair-api-ts`
+- **BREAKING**: Updated to OAuth 2.0 authentication (OAuth 1.0 no longer supported)
+- Added support for HVAC units (minisplits) with full control capabilities
 - Added support for thermostats, bridges, and remote sensors
-- Added webhook registration support
-- Added schedule management
-- Enhanced Structure model with location, setup, and advanced attributes
-- Improved TypeScript type definitions
+- Added webhook registration for real-time updates
+- Added schedule management functionality
+- Enhanced Structure model with 30+ new attributes (location, setup, hold settings, etc.)
+- Improved TypeScript type definitions and added new enums
+- Fixed OAuth token refresh to use correct client instance
+
+### Migration from 1.x
+If upgrading from the original `flair-api-ts` package:
+1. Update your import to use `@jarlbrak/flair-api-ts`
+2. OAuth endpoints have changed from `/oauth/token` to `/oauth2/token`
+3. Ensure you have OAuth 2.0 credentials (OAuth 1.0 is no longer supported)
