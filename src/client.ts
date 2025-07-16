@@ -432,4 +432,169 @@ export class Client {
     structure.fromJSON(response.data.data);
     return structure;
   }
+
+  /**
+   * Get all HVAC units
+   * @returns Promise<[HvacUnit]>
+   */
+  public async getHvacUnits(): Promise<[HvacUnit]> {
+    await this.updateClient();
+    const response = await this.client.get('/api/hvac-units');
+    //TODO: Paginate
+    return response.data.data.map((data: any): HvacUnit => {
+      return new HvacUnit().fromJSON(data);
+    });
+  }
+
+  /**
+   * Get a specific HVAC unit
+   * @param hvacUnit
+   * @returns Promise<HvacUnit>
+   */
+  public async getHvacUnit(hvacUnit: HvacUnit): Promise<HvacUnit> {
+    await this.updateClient();
+    const response = await this.client.get(`/api/hvac-units/${hvacUnit.id}`);
+    return hvacUnit.fromJSON(response.data.data);
+  }
+
+  /**
+   * Set HVAC unit properties
+   * @param hvacUnit
+   * @param attributes
+   * @returns Promise<HvacUnit>
+   */
+  public async setHvacUnit(
+    hvacUnit: HvacUnit,
+    attributes: {
+      temperature?: number;
+      'fan-speed'?: FanSpeed;
+      swing?: SwingMode;
+      mode?: HvacMode;
+      power?: PowerState;
+    }
+  ): Promise<HvacUnit> {
+    await this.updateClient();
+    const response = await this.client.patch(
+      `/api/hvac-units/${hvacUnit.id}`,
+      {
+        data: {
+          type: 'hvac-units',
+          attributes: attributes,
+          relationships: {},
+        },
+      }
+    );
+    hvacUnit.fromJSON(response.data.data);
+    return hvacUnit;
+  }
+
+  /**
+   * Get all thermostats
+   * @returns Promise<[Thermostat]>
+   */
+  public async getThermostats(): Promise<[Thermostat]> {
+    await this.updateClient();
+    const response = await this.client.get('/api/thermostats');
+    //TODO: Paginate
+    return response.data.data.map((data: any): Thermostat => {
+      return new Thermostat().fromJSON(data);
+    });
+  }
+
+  /**
+   * Get all bridges
+   * @returns Promise<[Bridge]>
+   */
+  public async getBridges(): Promise<[Bridge]> {
+    await this.updateClient();
+    const response = await this.client.get('/api/bridges');
+    //TODO: Paginate
+    return response.data.data.map((data: any): Bridge => {
+      return new Bridge().fromJSON(data);
+    });
+  }
+
+  /**
+   * Get bridge current reading
+   * @param bridge
+   * @returns Promise<Bridge>
+   */
+  public async getBridgeReading(bridge: Bridge): Promise<Bridge> {
+    await this.updateClient();
+    const response = await this.client.get(
+      `/api/bridges/${bridge.id}/current-reading`
+    );
+    bridge.setCurrentReading(response.data.data);
+    return bridge;
+  }
+
+  /**
+   * Get remote sensor current reading
+   * @param remoteSensor
+   * @returns Promise<RemoteSensor>
+   */
+  public async getRemoteSensorReading(
+    remoteSensor: RemoteSensor
+  ): Promise<RemoteSensor> {
+    await this.updateClient();
+    const response = await this.client.get(
+      `/api/remote-sensors/${remoteSensor.id}/current-reading`
+    );
+    remoteSensor.setCurrentReading(response.data.data);
+    return remoteSensor;
+  }
+
+  /**
+   * Set structure webhook callback URL
+   * @param structure
+   * @param callbackUrl
+   * @returns Promise<Structure>
+   */
+  public async setStructureWebhook(
+    structure: Structure,
+    callbackUrl: string
+  ): Promise<Structure> {
+    await this.updateClient();
+    const response = await this.client.patch(
+      `/api/structures/${structure.id}`,
+      {
+        data: {
+          type: 'structures',
+          attributes: {
+            'callback-url': callbackUrl,
+          },
+          relationships: {},
+        },
+      }
+    );
+    structure.fromJSON(response.data.data);
+    return structure;
+  }
+
+  /**
+   * Set active schedule for structure
+   * @param structure
+   * @param scheduleId
+   * @returns Promise<Structure>
+   */
+  public async setStructureActiveSchedule(
+    structure: Structure,
+    scheduleId: string
+  ): Promise<Structure> {
+    await this.updateClient();
+    const response = await this.client.patch(
+      `/api/structures/${structure.id}`,
+      {
+        data: {
+          type: 'structures',
+          attributes: {
+            'active-schedule-id': scheduleId,
+          },
+          relationships: {},
+        },
+      }
+    );
+    structure.fromJSON(response.data.data);
+    return structure;
+  }
 }
