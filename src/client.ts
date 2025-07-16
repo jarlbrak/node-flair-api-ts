@@ -35,11 +35,17 @@ export class Client {
   private static scopes = [
     'structures.edit',
     'structures.view',
+    'rooms.view',
+    'rooms.edit',
     'pucks.view',
     'pucks.edit',
     'vents.view',
     'vents.edit',
     'users.view',
+    'thermostats.view',
+    'thermostats.edit',
+    'hvac-units.view',
+    'hvac-units.edit',
   ];
 
   private refreshTokenConfig: {
@@ -88,7 +94,7 @@ export class Client {
    */
   private async getRefreshToken(): Promise<Token> {
     const requestURL =
-      '/oauth/token?' +
+      '/oauth2/token?' +
       new URLSearchParams(this.passwordTokenConfig).toString();
     const response = await this.client.post(requestURL);
     if (response.status !== 200) {
@@ -114,13 +120,13 @@ export class Client {
       this.currentToken.expires_at.isBefore(moment().subtract(20, 'seconds'))
     ) {
       const requestURL =
-        '/oauth/token?' +
+        '/oauth2/token?' +
         new URLSearchParams({
           ...this.refreshTokenConfig,
           refresh_token: this.currentToken!.refresh_token,
         }).toString();
       try {
-        const response = await axios.post(requestURL);
+        const response = await this.client.post(requestURL);
         if (response.status !== 200) {
           return this.getRefreshToken();
         }
