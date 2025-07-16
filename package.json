@@ -1,5 +1,5 @@
 {
-  "name": "flair-api-ts",
+  "name": "@jarlbrak/flair-api-ts",
   "version": "0.0.0-development",
   "description": "A ts-node implementation of the Flair Smart Vent API",
   "author": "bassrock",
