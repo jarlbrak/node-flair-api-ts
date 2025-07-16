@@ -8,6 +8,14 @@ import {
   User,
   Vent,
   Room,
+  HvacUnit,
+  HvacMode,
+  FanSpeed,
+  SwingMode,
+  PowerState,
+  Thermostat,
+  Bridge,
+  RemoteSensor,
 } from './models';
 
 export interface Token {
@@ -35,11 +43,17 @@ export class Client {
   private static scopes = [
     'structures.edit',
     'structures.view',
+    'rooms.view',
+    'rooms.edit',
     'pucks.view',
     'pucks.edit',
     'vents.view',
     'vents.edit',
     'users.view',
+    'thermostats.view',
+    'thermostats.edit',
+    'hvac-units.view',
+    'hvac-units.edit',
   ];
 
   private refreshTokenConfig: {
@@ -60,7 +74,7 @@ export class Client {
     client_id: string,
     client_secret: string,
     username: string,
-    password: string
+    password: string,
   ) {
     this.passwordTokenConfig = {
       username: username,
@@ -88,7 +102,7 @@ export class Client {
    */
   private async getRefreshToken(): Promise<Token> {
     const requestURL =
-      '/oauth/token?' +
+      '/oauth2/token?' +
       new URLSearchParams(this.passwordTokenConfig).toString();
     const response = await this.client.post(requestURL);
     if (response.status !== 200) {
@@ -96,7 +110,7 @@ export class Client {
     }
     response.data.expires_at = moment().add(
       response.data.expires_in,
-      'seconds'
+      'seconds',
     );
     return (this.currentToken = response.data as Token);
   }
@@ -114,19 +128,19 @@ export class Client {
       this.currentToken.expires_at.isBefore(moment().subtract(20, 'seconds'))
     ) {
       const requestURL =
-        '/oauth/token?' +
+        '/oauth2/token?' +
         new URLSearchParams({
           ...this.refreshTokenConfig,
           refresh_token: this.currentToken!.refresh_token,
         }).toString();
       try {
-        const response = await axios.post(requestURL);
+        const response = await this.client.post(requestURL);
         if (response.status !== 200) {
           return this.getRefreshToken();
         }
         response.data.expires_at = moment().add(
           response.data.expires_in,
-          'seconds'
+          'seconds',
         );
         this.currentToken = response.data;
       } catch (e) {
@@ -193,7 +207,7 @@ export class Client {
   public async getVentReading(vent: Vent): Promise<Vent> {
     await this.updateClient();
     const response = await this.client.get(
-      `/api/vents/${vent.id}/current-reading`
+      `/api/vents/${vent.id}/current-reading`,
     );
     vent.setCurrentReading(response.data.data);
     return vent;
@@ -207,7 +221,7 @@ export class Client {
    */
   public async setVentPercentOpen(
     vent: Vent,
-    percentOpen: number
+    percentOpen: number,
   ): Promise<Vent> {
     await this.updateClient();
     const response = await this.client.patch(`/api/vents/${vent.id}`, {
@@ -231,7 +245,7 @@ export class Client {
   public async getPuckReading(puck: Puck): Promise<Puck> {
     await this.updateClient();
     const response = await this.client.get(
-      `/api/pucks/${puck.id}/current-reading`
+      `/api/pucks/${puck.id}/current-reading`,
     );
     puck.setCurrentReading(response.data.data);
     return puck;
@@ -348,7 +362,7 @@ export class Client {
    */
   public async setStructureMode(
     structure: Structure,
-    mode: FlairMode
+    mode: FlairMode,
   ): Promise<Structure> {
     await this.updateClient();
     const response = await this.client.patch(
@@ -361,7 +375,7 @@ export class Client {
           },
           relationships: {},
         },
-      }
+      },
     );
     return structure.fromJSON(response.data.data);
   }
@@ -374,7 +388,7 @@ export class Client {
    */
   public async setStructureHeatingCoolMode(
     structure: Structure,
-    mode: StructureHeatCoolMode
+    mode: StructureHeatCoolMode,
   ): Promise<Structure> {
     await this.updateClient();
     const response = await this.client.patch(
@@ -387,7 +401,7 @@ export class Client {
           },
           relationships: {},
         },
-      }
+      },
     );
     return structure.fromJSON(response.data.data);
   }
@@ -400,7 +414,7 @@ export class Client {
    */
   public async setStructureSetPoint(
     structure: Structure,
-    setPointC: number
+    setPointC: number,
   ): Promise<Structure> {
     await this.updateClient();
     const response = await this.client.patch(
@@ -413,7 +427,172 @@ export class Client {
           },
           relationships: {},
         },
-      }
+      },
+    );
+    structure.fromJSON(response.data.data);
+    return structure;
+  }
+
+  /**
+   * Get all HVAC units
+   * @returns Promise<[HvacUnit]>
+   */
+  public async getHvacUnits(): Promise<[HvacUnit]> {
+    await this.updateClient();
+    const response = await this.client.get('/api/hvac-units');
+    //TODO: Paginate
+    return response.data.data.map((data: any): HvacUnit => {
+      return new HvacUnit().fromJSON(data);
+    });
+  }
+
+  /**
+   * Get a specific HVAC unit
+   * @param hvacUnit
+   * @returns Promise<HvacUnit>
+   */
+  public async getHvacUnit(hvacUnit: HvacUnit): Promise<HvacUnit> {
+    await this.updateClient();
+    const response = await this.client.get(`/api/hvac-units/${hvacUnit.id}`);
+    return hvacUnit.fromJSON(response.data.data);
+  }
+
+  /**
+   * Set HVAC unit properties
+   * @param hvacUnit
+   * @param attributes
+   * @returns Promise<HvacUnit>
+   */
+  public async setHvacUnit(
+    hvacUnit: HvacUnit,
+    attributes: {
+      temperature?: number;
+      'fan-speed'?: FanSpeed;
+      swing?: SwingMode;
+      mode?: HvacMode;
+      power?: PowerState;
+    },
+  ): Promise<HvacUnit> {
+    await this.updateClient();
+    const response = await this.client.patch(
+      `/api/hvac-units/${hvacUnit.id}`,
+      {
+        data: {
+          type: 'hvac-units',
+          attributes: attributes,
+          relationships: {},
+        },
+      },
+    );
+    hvacUnit.fromJSON(response.data.data);
+    return hvacUnit;
+  }
+
+  /**
+   * Get all thermostats
+   * @returns Promise<[Thermostat]>
+   */
+  public async getThermostats(): Promise<[Thermostat]> {
+    await this.updateClient();
+    const response = await this.client.get('/api/thermostats');
+    //TODO: Paginate
+    return response.data.data.map((data: any): Thermostat => {
+      return new Thermostat().fromJSON(data);
+    });
+  }
+
+  /**
+   * Get all bridges
+   * @returns Promise<[Bridge]>
+   */
+  public async getBridges(): Promise<[Bridge]> {
+    await this.updateClient();
+    const response = await this.client.get('/api/bridges');
+    //TODO: Paginate
+    return response.data.data.map((data: any): Bridge => {
+      return new Bridge().fromJSON(data);
+    });
+  }
+
+  /**
+   * Get bridge current reading
+   * @param bridge
+   * @returns Promise<Bridge>
+   */
+  public async getBridgeReading(bridge: Bridge): Promise<Bridge> {
+    await this.updateClient();
+    const response = await this.client.get(
+      `/api/bridges/${bridge.id}/current-reading`,
+    );
+    bridge.setCurrentReading(response.data.data);
+    return bridge;
+  }
+
+  /**
+   * Get remote sensor current reading
+   * @param remoteSensor
+   * @returns Promise<RemoteSensor>
+   */
+  public async getRemoteSensorReading(
+    remoteSensor: RemoteSensor,
+  ): Promise<RemoteSensor> {
+    await this.updateClient();
+    const response = await this.client.get(
+      `/api/remote-sensors/${remoteSensor.id}/current-reading`,
+    );
+    remoteSensor.setCurrentReading(response.data.data);
+    return remoteSensor;
+  }
+
+  /**
+   * Set structure webhook callback URL
+   * @param structure
+   * @param callbackUrl
+   * @returns Promise<Structure>
+   */
+  public async setStructureWebhook(
+    structure: Structure,
+    callbackUrl: string,
+  ): Promise<Structure> {
+    await this.updateClient();
+    const response = await this.client.patch(
+      `/api/structures/${structure.id}`,
+      {
+        data: {
+          type: 'structures',
+          attributes: {
+            'callback-url': callbackUrl,
+          },
+          relationships: {},
+        },
+      },
+    );
+    structure.fromJSON(response.data.data);
+    return structure;
+  }
+
+  /**
+   * Set active schedule for structure
+   * @param structure
+   * @param scheduleId
+   * @returns Promise<Structure>
+   */
+  public async setStructureActiveSchedule(
+    structure: Structure,
+    scheduleId: string,
+  ): Promise<Structure> {
+    await this.updateClient();
+    const response = await this.client.patch(
+      `/api/structures/${structure.id}`,
+      {
+        data: {
+          type: 'structures',
+          attributes: {
+            'active-schedule-id': scheduleId,
+          },
+          relationships: {},
+        },
+      },
     );
     structure.fromJSON(response.data.data);
     return structure;

@@ -29,6 +29,9 @@ export class Puck extends Model {
     dropRate = 0;
     updatedAt: Date = new Date();
     createdAt: Date = new Date();
+    
+    // Additional attributes from latest API
+    'pucks-inactive'?: string;
 
     desiredTemperatureC = 0;
     firmwareVersionB = '';
@@ -101,6 +104,7 @@ export class Puck extends Model {
       this.createdAt = new Date(data.attributes['created-at']);
       this.updatedAt = new Date(data.attributes['updated-at']);
       this.id = data.id;
+      this['pucks-inactive'] = data.attributes['pucks-inactive'];
       return this;
     }
 }
