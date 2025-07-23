@@ -216,7 +216,7 @@ Pull requests are welcome! Please ensure:
 
 ## Changelog
 
-### Version 2.0.0 (Breaking Changes)
+### Recent Changes (Breaking)
 - **BREAKING**: Package renamed from `flair-api-ts` to `@jarlbrak/flair-api-ts`
 - **BREAKING**: Updated to OAuth 2.0 client credentials flow (password grants no longer supported)
 - **NEW**: Generic CRUD API supporting any resource type with `get()`, `create()`, `update()`, `delete()` methods
