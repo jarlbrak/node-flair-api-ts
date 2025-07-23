@@ -17,7 +17,7 @@ describe('Client', () => {
     const { completeRecording, assertScopesFinished } = await record(`flair-${counter}`);
     scopeAssertScopesFinished = assertScopesFinished;
     scopeCompleteRecording = completeRecording;
-    client = new Client('test_client_id', 'test_client_secret', 'test_username', 'test_password');
+    client = new Client('test_client_id', 'test_client_secret');
   });
 
   afterEach(async () => {

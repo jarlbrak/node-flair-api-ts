@@ -1,5 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
-import moment, { Moment } from 'moment';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { EmptyBodyError, ApiError } from './errors';
+import { Model, ResourceAttributes, ResourceRelationships } from './models/model';
 import {
   FlairMode,
   Puck,
@@ -20,144 +21,258 @@ import {
 
 export interface Token {
   access_token: string;
-  expires_at: Moment;
+  expires_in: number;
   token_type: string;
-  scope: string;
-  refresh_token: string;
 }
 
 export class Client {
-  private passwordTokenConfig: {
-    password: string;
-    scope: string;
-    client_secret: string;
-    client_id: string;
-    username: string;
-    grant_type: string;
-  };
-
+  private client_id: string;
+  private client_secret: string;
   private currentToken?: Token;
-
   private client: AxiosInstance;
 
-  private static scopes = [
-    'structures.edit',
-    'structures.view',
-    'rooms.view',
-    'rooms.edit',
-    'pucks.view',
-    'pucks.edit',
-    'vents.view',
-    'vents.edit',
-    'users.view',
-    'thermostats.view',
-    'thermostats.edit',
-    'hvac-units.view',
-    'hvac-units.edit',
-  ];
-
-  private refreshTokenConfig: {
-    grant_type: string;
-    scope: string;
-    client_secret: string;
-    client_id: string;
+  private static readonly DEFAULT_HEADERS = {
+    'Accept': 'application/vnd.api+json',
+    'Content-Type': 'application/json',
   };
 
   /**
-   *
-   * @param client_id
-   * @param client_secret
-   * @param username
-   * @param password
+   * Creates a new Flair API client using client credentials authentication
+   * @param client_id - OAuth2 client ID
+   * @param client_secret - OAuth2 client secret
    */
-  constructor(
-    client_id: string,
-    client_secret: string,
-    username: string,
-    password: string,
-  ) {
-    this.passwordTokenConfig = {
-      username: username,
-      password: password,
-      scope: Client.scopes.join(' '),
-      client_id: client_id,
-      client_secret: client_secret,
-      grant_type: 'password',
-    };
-
-    this.refreshTokenConfig = {
-      scope: Client.scopes.join('+'),
-      client_id: client_id,
-      client_secret: client_secret,
-      grant_type: 'refresh_token',
-    };
+  constructor(client_id: string, client_secret: string) {
+    this.client_id = client_id;
+    this.client_secret = client_secret;
 
     this.client = axios.create({
       baseURL: 'https://api.flair.co',
+      headers: Client.DEFAULT_HEADERS,
     });
   }
 
   /**
-   * Gets a refresh token and saves to memory
+   * Gets an OAuth2 access token using client credentials flow
    */
-  private async getRefreshToken(): Promise<Token> {
-    const requestURL =
-      '/oauth2/token?' +
-      new URLSearchParams(this.passwordTokenConfig).toString();
-    const response = await this.client.post(requestURL);
+  private async getAccessToken(): Promise<Token> {
+    const response = await this.client.post('/oauth/token', {
+      client_id: this.client_id,
+      client_secret: this.client_secret,
+      grant_type: 'client_credentials',
+    });
+    
     if (response.status !== 200) {
-      throw new Error('Getting refresh token failed.');
+      throw new Error('Getting access token failed.');
     }
-    response.data.expires_at = moment().add(
-      response.data.expires_in,
-      'seconds',
-    );
+    
     return (this.currentToken = response.data as Token);
   }
 
   /**
-   * Updates the access token saved in memory if we have a refresh token
-   * otherwise gets a refresh token
-   *
-   * @returns Promise<Token>
+   * Ensures we have a valid access token, fetching one if needed
    */
-  private async updateAccessToken(): Promise<Token> {
-    if (this.currentToken === undefined) {
-      return this.getRefreshToken();
-    } else if (
-      this.currentToken.expires_at.isBefore(moment().subtract(20, 'seconds'))
-    ) {
-      const requestURL =
-        '/oauth2/token?' +
-        new URLSearchParams({
-          ...this.refreshTokenConfig,
-          refresh_token: this.currentToken!.refresh_token,
-        }).toString();
-      try {
-        const response = await this.client.post(requestURL);
-        if (response.status !== 200) {
-          return this.getRefreshToken();
-        }
-        response.data.expires_at = moment().add(
-          response.data.expires_in,
-          'seconds',
-        );
-        this.currentToken = response.data;
-      } catch (e) {
-        return this.getRefreshToken();
-      }
+  private async ensureAccessToken(): Promise<void> {
+    if (!this.currentToken) {
+      await this.getAccessToken();
     }
-
-    return this.currentToken!;
   }
 
   /**
-   * Updates the authClient
+   * Updates the client with current authorization header
    */
   private async updateClient() {
-    await this.updateAccessToken();
+    await this.ensureAccessToken();
     this.client.defaults.headers.common.Authorization =
-      this.currentToken!.token_type + ' ' + this.currentToken!.access_token;
+      `${this.currentToken!.token_type} ${this.currentToken!.access_token}`;
+  }
+
+  /**
+   * Handles API responses with proper error handling and data extraction
+   */
+  private handleResponse(response: AxiosResponse): any {
+    const { status, data } = response;
+
+    // Handle successful responses
+    if (status >= 200 && status < 300 && status !== 204) {
+      // Check for empty data in successful responses
+      if (data && data.data === null) {
+        throw new EmptyBodyError(response);
+      }
+      return data;
+    }
+    
+    // Handle no content responses
+    if (status === 204) {
+      return null;
+    }
+
+    // Handle error responses
+    if (status >= 400) {
+      throw new ApiError(response);
+    }
+
+    return data;
+  }
+
+  /**
+   * Constructs resource URL for API endpoints
+   */
+  private resourceUrl(resourceType: string, id?: string): string {
+    let path = `/api/${resourceType}`;
+    if (id) {
+      path += `/${id}`;
+    }
+    return path;
+  }
+
+  /**
+   * Converts relationships to JSON-API format
+   */
+  private toRelationshipDict(relationships: ResourceRelationships): any {
+    const result: any = {};
+    for (const [key, value] of Object.entries(relationships)) {
+      if (Array.isArray(value)) {
+        result[key] = {
+          data: value.map(item => 
+            item instanceof Model ? item.toRelationship() : item,
+          ),
+        };
+      } else if (value instanceof Model) {
+        result[key] = { data: value.toRelationship() };
+      } else if (value) {
+        result[key] = { data: value };
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Generic GET method for any resource type
+   */
+  public async get<T extends Model>(resourceType: string, id?: string): Promise<T | T[]> {
+    try {
+      await this.updateClient();
+      const url = this.resourceUrl(resourceType, id);
+      const response = await this.client.get(url);
+      const responseData = this.handleResponse(response);
+
+      if (Array.isArray(responseData.data)) {
+        // Return array of resources
+        return responseData.data.map((item: any) => {
+          const instance = this.createModelInstance<T>(item);
+          return instance;
+        });
+      } else {
+        // Return single resource
+        return this.createModelInstance<T>(responseData.data);
+      }
+    } catch (error: any) {
+      if (error.response) {
+        throw new ApiError(error.response);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generic POST method for creating resources
+   */
+  public async create<T extends Model>(
+    resourceType: string, 
+    attributes: ResourceAttributes = {}, 
+    relationships: ResourceRelationships = {},
+  ): Promise<T> {
+    try {
+      await this.updateClient();
+      const url = this.resourceUrl(resourceType);
+      
+      const requestBody = {
+        data: {
+          type: resourceType,
+          attributes,
+          relationships: this.toRelationshipDict(relationships),
+        },
+      };
+
+      const response = await this.client.post(url, requestBody);
+      const responseData = this.handleResponse(response);
+      return this.createModelInstance<T>(responseData.data);
+    } catch (error: any) {
+      if (error.response) {
+        throw new ApiError(error.response);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generic PATCH method for updating resources
+   */
+  public async update<T extends Model>(
+    resourceType: string,
+    id: string,
+    attributes: ResourceAttributes = {},
+    relationships: ResourceRelationships = {},
+  ): Promise<T> {
+    try {
+      await this.updateClient();
+      const url = this.resourceUrl(resourceType, id);
+      
+      const requestBody = {
+        data: {
+          id,
+          type: resourceType,
+          attributes,
+          relationships: this.toRelationshipDict(relationships),
+        },
+      };
+
+      const response = await this.client.patch(url, requestBody);
+      const responseData = this.handleResponse(response);
+      return this.createModelInstance<T>(responseData.data);
+    } catch (error: any) {
+      if (error.response) {
+        throw new ApiError(error.response);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generic DELETE method for removing resources
+   */
+  public async delete(resourceType: string, id: string): Promise<void> {
+    try {
+      await this.updateClient();
+      const url = this.resourceUrl(resourceType, id);
+      const response = await this.client.delete(url);
+      this.handleResponse(response);
+    } catch (error: any) {
+      if (error.response) {
+        throw new ApiError(error.response);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Creates a model instance from API response data
+   */
+  private createModelInstance<T extends Model>(data: any): T {
+    // This is a simplified implementation - in a real app, you'd have a registry
+    // of model classes mapped to resource types
+    const instance = new Model() as any;
+    instance.id = data.id;
+    instance.attributes = data.attributes || {};
+    instance.relationships = data.relationships || {};
+    instance.setClient(this);
+    
+    // Copy attributes to instance for backward compatibility
+    if (data.attributes) {
+      Object.assign(instance, data.attributes);
+    }
+    
+    return instance as T;
   }
 
   /**
@@ -167,8 +282,9 @@ export class Client {
   public async getUsers(): Promise<[User]> {
     await this.updateClient();
     const response = await this.client.get('/api/users');
+    const responseData = this.handleResponse(response);
     //TODO: Paginate
-    return response.data.data.map((data: any): User => {
+    return responseData.data.map((data: any): User => {
       return new User().fromJSON(data);
     });
   }
