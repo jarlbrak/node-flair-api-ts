@@ -37,7 +37,7 @@ export class Client {
   };
 
   /**
-   * Creates a new Flair API client using client credentials authentication
+   * Creates a new Flair API client using secure OAuth2 client credentials authentication
    * @param client_id - OAuth2 client ID
    * @param client_secret - OAuth2 client secret
    */
