@@ -4,3 +4,7 @@ export { Vent } from './vent';
 export { Model } from './model';
 export { Room, RoomAwayMode, OccupancyMode, PuckInactive } from './room';
 export { Structure, StructureHeatCoolMode, FlairMode } from './structure';
+export { HvacUnit } from './hvac-unit';
+export { Thermostat } from './thermostat';
+export { Bridge } from './bridge';
+export { RemoteSensor } from './remote-sensor';

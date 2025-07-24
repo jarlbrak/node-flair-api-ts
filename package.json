@@ -1,7 +1,7 @@
 {
   "name": "flair-api-ts",
   "version": "0.0.0-development",
-  "description": "A ts-node implementation of the Flair Smart Vent API",
+  "description": "A TypeScript implementation of the Flair Smart Vent API with OAuth 2.0 support",
   "author": "bassrock",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,8 +35,7 @@
     ]
   },
   "dependencies": {
-    "axios": "^1.2.2",
-    "moment": "^2.29.1"
+    "axios": "^1.2.2"
   },
   "devDependencies": {
     "@semantic-release/commit-analyzer": "9.0.2",
