@@ -33,7 +33,9 @@ export class Structure extends Model {
     this.isActive = data.attributes['is-active'];
     this.home = data.attributes.home;
     this.structureHeatCoolMode = data.attributes['structure-heat-cool-mode'];
-    this.structureHeatCoolModeCalculated = data.attributes['structure-heat-cool-mode-calculated'] === null ? undefined : data.attributes['structure-heat-cool-mode-calculated'];
+    this.structureHeatCoolModeCalculated =
+      data.attributes['structure-heat-cool-mode-calculated'] === null ?
+        undefined : data.attributes['structure-heat-cool-mode-calculated'];
     this.setPointTemperatureC = data.attributes['set-point-temperature-c'];
     this.mode = data.attributes.mode;
 

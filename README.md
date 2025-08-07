@@ -57,12 +57,14 @@ This library uses OAuth 2.0 client credentials flow for secure authentication:
 ## API Methods
 
 ### Generic CRUD Operations
+
 - `get<T>(resourceType, id?)` - Get resource(s) of any type
 - `create<T>(resourceType, attributes, relationships?)` - Create new resource  
 - `update<T>(resourceType, id, attributes, relationships?)` - Update resource
 - `delete(resourceType, id)` - Delete resource
 
 **Examples:**
+
 ```typescript
 // Get all vents
 const vents = await client.get('vents');
@@ -84,7 +86,8 @@ await client.delete('vents', 'vent123');
 
 **Breaking Changes in 2.0:**
 
-1. **Authentication**: Replace username/password with client credentials:
+- **Authentication**: Replace username/password with client credentials:
+
 ```typescript
 // OLD (insecure)
 const client = new Client('client_id', 'client_secret', 'username', 'password');
@@ -93,7 +96,8 @@ const client = new Client('client_id', 'client_secret', 'username', 'password');
 const client = new Client('client_id', 'client_secret');
 ```
 
-2. **API Methods**: Legacy methods removed, use generic CRUD:
+- **API Methods**: Legacy methods removed, use generic CRUD:
+
 ```typescript
 // OLD
 const vents = await client.getVents();
@@ -107,21 +111,24 @@ await client.update('vents', vent.id, { 'percent-open': 50 });
 ## Development
 
 ### Building
+
 ```bash
 npm run build
 ```
 
 ### Testing
+
 ```bash
 npm test
 ```
 
 ### Linting
+
 ```bash
 npm run lint
 ```
 
-# Docs
+## Docs
 
 Docs are located at [https://bassrock.github.io/node-flair-api-ts/index.html](https://bassrock.github.io/node-flair-api-ts/index.html)
 

@@ -27,6 +27,7 @@ The Flair API uses OAuth 2.0 client credentials flow for secure authentication:
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
@@ -50,11 +51,13 @@ All API endpoints are relative to: `https://api.flair.co`
 The Flair API supports the following resource types:
 
 ### Core Resources
+
 - **users** - User accounts and profiles
 - **structures** - Buildings/homes containing devices
 - **rooms** - Individual rooms within structures
 
 ### Device Resources
+
 - **pucks** - Temperature and humidity sensors
 - **vents** - Smart air vents with controllable dampers
 - **thermostats** - Traditional and smart thermostats
@@ -63,6 +66,7 @@ The Flair API supports the following resource types:
 - **remote-sensors** - Additional temperature sensors
 
 ### Configuration Resources
+
 - **schedules** - Automated scheduling rules
 - **webhooks** - Real-time event notifications
 
@@ -73,16 +77,19 @@ All resources support standard CRUD operations following JSON-API specification:
 ### GET Resources
 
 **Get all resources:**
-```
+
+```bash
 GET /api/{resource-type}
 ```
 
 **Get single resource:**
-```  
+
+```bash
 GET /api/{resource-type}/{id}
 ```
 
 **Example Response:**
+
 ```json
 {
   "data": {
@@ -104,11 +111,12 @@ GET /api/{resource-type}/{id}
 
 ### POST (Create) Resources
 
-```
+```bash
 POST /api/{resource-type}
 ```
 
 **Request Body:**
+
 ```json
 {
   "data": {
@@ -127,11 +135,12 @@ POST /api/{resource-type}
 
 ### PATCH (Update) Resources
 
-```
+```bash
 PATCH /api/{resource-type}/{id}
 ```
 
 **Request Body:**
+
 ```json
 {
   "data": {
@@ -146,7 +155,7 @@ PATCH /api/{resource-type}/{id}
 
 ### DELETE Resources
 
-```
+```bash
 DELETE /api/{resource-type}/{id}
 ```
 
@@ -155,17 +164,20 @@ Returns `204 No Content` on success.
 ## Resource Attributes
 
 ### Users
+
 - `email` - User email address
 - `name` - Display name
 - `created-at` - Account creation timestamp
 - `updated-at` - Last modification timestamp
 
 ### Structures  
+
 - `name` - Building/home name
 - `created-at` - Creation timestamp
 - `updated-at` - Last modification timestamp
 
 ### Rooms
+
 - `name` - Room name
 - `level` - Floor/level number
 - `room-type` - Category (bedroom, living-room, etc.)
@@ -173,6 +185,7 @@ Returns `204 No Content` on success.
 - `updated-at` - Last modification timestamp
 
 ### Pucks (Temperature Sensors)
+
 - `name` - Device name
 - `current-temperature` - Current temperature reading (°F)
 - `current-humidity` - Current humidity percentage
@@ -183,6 +196,7 @@ Returns `204 No Content` on success.
 - `updated-at` - Last modification timestamp
 
 ### Vents
+
 - `name` - Vent name
 - `percent-open` - Damper position (0-100%)
 - `system-mode` - Operating mode (auto, manual)
@@ -192,6 +206,7 @@ Returns `204 No Content` on success.
 - `updated-at` - Last modification timestamp
 
 ### Thermostats
+
 - `name` - Thermostat name
 - `current-temperature` - Current temperature reading
 - `set-point-temperature` - Target temperature
@@ -201,6 +216,7 @@ Returns `204 No Content` on success.
 - `updated-at` - Last modification timestamp
 
 ### HVAC Units
+
 - `name` - Unit name
 - `make-model` - Manufacturer and model
 - `ir-setup-enabled` - IR control availability
@@ -209,6 +225,7 @@ Returns `204 No Content` on success.
 - `updated-at` - Last modification timestamp
 
 ### Bridges
+
 - `name` - Bridge name  
 - `rssi` - Signal strength
 - `current-firmware-version` - Firmware version
@@ -216,6 +233,7 @@ Returns `204 No Content` on success.
 - `updated-at` - Last modification timestamp
 
 ### Remote Sensors
+
 - `name` - Sensor name
 - `current-temperature` - Temperature reading
 - `current-humidity` - Humidity reading
@@ -227,6 +245,7 @@ Returns `204 No Content` on success.
 ## Common Relationships
 
 ### Structure Relationships
+
 - `admin-users` - Users with admin access
 - `rooms` - Rooms within the structure
 - `pucks` - Temperature sensors in structure
@@ -234,12 +253,14 @@ Returns `204 No Content` on success.
 - `hvac-units` - HVAC systems in structure
 
 ### Room Relationships  
+
 - `structure` - Parent structure
 - `pucks` - Temperature sensors in room
 - `vents` - Vents in room
 - `hvac-units` - HVAC units serving room
 
 ### Device Relationships
+
 - `structure` - Parent structure
 - `room` - Room containing device
 - `bridge` - Communication bridge (for wireless devices)
@@ -249,6 +270,7 @@ Returns `204 No Content` on success.
 The API returns standard HTTP status codes and JSON-API error objects:
 
 **Error Response Format:**
+
 ```json
 {
   "errors": [{
@@ -260,6 +282,7 @@ The API returns standard HTTP status codes and JSON-API error objects:
 ```
 
 **Common Status Codes:**
+
 - `200` - Success
 - `201` - Created
 - `204` - No Content (successful deletion)
@@ -281,6 +304,7 @@ Webhooks can be configured to receive real-time notifications when device states
 ## Examples
 
 ### Control a Vent
+
 ```typescript
 // Get all vents
 const vents = await client.get('vents');
@@ -290,6 +314,7 @@ await client.update('vents', vents[0].id, { 'percent-open': 50 });
 ```
 
 ### Read Temperature
+
 ```typescript  
 // Get all pucks (temperature sensors)
 const pucks = await client.get('pucks');
@@ -299,6 +324,7 @@ const temperature = pucks[0].attributes['current-temperature'];
 ```
 
 ### Control HVAC Unit
+
 ```typescript
 // Get HVAC units
 const hvacUnits = await client.get('hvac-units');
@@ -318,5 +344,6 @@ await client.update('hvac-units', hvacUnits[0].id, {
 ## Support
 
 For technical support and business partnerships:
+
 - Email: [partners@flair.co](mailto:partners@flair.co)
 - Documentation: [Official API Docs](https://documenter.getpostman.com/view/5353571/TzsbKTAG)

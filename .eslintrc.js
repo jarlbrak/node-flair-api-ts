@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 module.exports = {
   parser: '@typescript-eslint/parser',
   extends: [
@@ -11,7 +12,7 @@ module.exports = {
   },
   ignorePatterns: [
     'dist',
-    'src/__nock-fixtures__/**'
+    'src/__nock-fixtures__/**',
   ],
   rules: {
     'quotes': ['warn', 'single'],
@@ -31,6 +32,6 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off'
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
   },
 };
